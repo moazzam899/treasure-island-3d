@@ -4,6 +4,12 @@ import * as THREE from 'three'
 
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 
+import {
+  playCoinSound,
+  playUnlockSound,
+  playVictorySound
+} from '../utils/sounds'
+
 function GameCanvas({ onCoinCollected, onWin }) {
   const mountRef = useRef(null)
 
@@ -52,6 +58,9 @@ const loader = new GLTFLoader()
 
 let playerModel = null
 
+let playerBaseY = 0
+let walkTime = 0
+
 let chestModel = null
 
 let collectedCoinCount = 0
@@ -94,6 +103,13 @@ const loadModel = (modelPath, position, targetHeight = 2.5) => {
     (gltf) => {
       const model = gltf.scene
 
+      if (modelPath === '/models/player-character.glb') {
+  console.log(
+    'Player animations:',
+    gltf.animations.map((animation) => animation.name)
+  )
+}
+
       // Calculate original dimensions
       const box = new THREE.Box3().setFromObject(model)
       const size = box.getSize(new THREE.Vector3())
@@ -115,8 +131,21 @@ const loadModel = (modelPath, position, targetHeight = 2.5) => {
 
       scene.add(model)
 
-     if (modelPath === '/models/player-character.glb') {
+   if (modelPath === '/models/player-character.glb') {
   playerModel = model
+  playerBaseY = model.position.y
+
+  console.log('PLAYER MODEL:', model)
+  console.log('PLAYER CHILDREN:', model.children)
+
+  model.traverse((child) => {
+    console.log(
+      'Object:',
+      child.name,
+      '| Type:',
+      child.type
+    )
+  })
 }
 
 if (modelPath === '/models/treasure-chest.glb') {
@@ -207,13 +236,36 @@ const animate = () => {
     3.5
   )
 
-  // Smooth Camera Follow
-  desiredCameraPosition
-    .copy(playerModel.position)
-    .add(cameraOffset)
+  
 
-  camera.position.lerp(desiredCameraPosition, 0.08)
-  camera.lookAt(playerModel.position)
+  // Procedural Walking Animation
+const isMoving =
+  keys.w || keys.a || keys.s || keys.d ||
+  keys.ArrowUp || keys.ArrowDown ||
+  keys.ArrowLeft || keys.ArrowRight
+
+if (isMoving) {
+  walkTime += 0.25
+  playerModel.position.y = playerBaseY + Math.abs(Math.sin(walkTime)) * 0.25
+} else {
+  walkTime = 0
+  playerModel.position.y = playerBaseY
+}
+
+  // Smooth Camera Follow
+  desiredCameraPosition.set(
+  playerModel.position.x + cameraOffset.x,
+  playerBaseY + cameraOffset.y,
+  playerModel.position.z + cameraOffset.z
+)
+
+camera.position.lerp(desiredCameraPosition, 0.08)
+
+camera.lookAt(
+  playerModel.position.x,
+  playerBaseY,
+  playerModel.position.z
+)
 }
 
 if (playerModel) {
@@ -228,14 +280,16 @@ if (playerModel) {
 
     if (distance < 1.2) {
       scene.remove(coin)
-      coinModels.splice(i, 1)
+coinModels.splice(i, 1)
 
-      onCoinCollected()
+playCoinSound()
 
+onCoinCollected()
 collectedCoinCount++
 
 if (collectedCoinCount >= 3) {
   chestUnlocked = true
+  playUnlockSound()
   console.log('Treasure Chest Unlocked!')
 }
 
@@ -252,6 +306,7 @@ if (playerModel && chestModel && chestUnlocked && !gameWon) {
 
   if (chestDistance < 1.2) {
     gameWon = true
+    playVictorySound()
     onWin()
     console.log('You Won!')
   }
