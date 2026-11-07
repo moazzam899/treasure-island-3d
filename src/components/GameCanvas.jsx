@@ -4,7 +4,7 @@ import * as THREE from 'three'
 
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 
-function GameCanvas() {
+function GameCanvas({ onCoinCollected, onWin }) {
   const mountRef = useRef(null)
 
   useEffect(() => {
@@ -51,6 +51,16 @@ function GameCanvas() {
 const loader = new GLTFLoader()
 
 let playerModel = null
+
+let chestModel = null
+
+let collectedCoinCount = 0
+let chestUnlocked = false
+
+let gameWon = false
+
+let coinModels = []
+
 
 const keys = {
   w: false,
@@ -109,6 +119,14 @@ const loadModel = (modelPath, position, targetHeight = 2.5) => {
   playerModel = model
 }
 
+if (modelPath === '/models/treasure-chest.glb') {
+  chestModel = model
+}
+
+if (modelPath === '/models/gold-coin.glb') {
+  coinModels.push(model)
+}
+
     },
     undefined,
     (error) => {
@@ -136,7 +154,10 @@ loadModel('/models/environment/bush-02.glb', { x: 2.5, y: 0, z: -2.5 }, 1.5)
 
 // Load Treasure Models
 loadModel('/models/treasure-chest.glb', { x: 0, y: 0, z: -3 }, 1.5)
-loadModel('/models/gold-coin.glb', { x: 0, y: 0, z: 2 }, 0.8)
+// Load Multiple Coins
+loadModel('/models/gold-coin.glb', { x: 2, y: 0, z: 2 }, 0.8)
+loadModel('/models/gold-coin.glb', { x: -3, y: 0, z: 3 }, 0.8)
+loadModel('/models/gold-coin.glb', { x: 3, y: 0, z: -2 }, 0.8)
 
 // Load Player Character
 loadModel('/models/player-character.glb', { x: 0, y: 0, z: 1 }, 1.5)
@@ -146,39 +167,95 @@ loadModel('/models/player-character.glb', { x: 0, y: 0, z: 1 }, 1.5)
 
     const moveSpeed = 0.08
 
+    const cameraOffset = new THREE.Vector3(0, 7, 12)
+const desiredCameraPosition = new THREE.Vector3()
+
 const animate = () => {
   animationId = requestAnimationFrame(animate)
 
   if (playerModel) {
-    if (keys.w || keys.ArrowUp) {
-      playerModel.position.z -= moveSpeed
-    }
-
-    if (keys.s || keys.ArrowDown) {
-      playerModel.position.z += moveSpeed
-    }
-
-    if (keys.a || keys.ArrowLeft) {
-      playerModel.position.x -= moveSpeed
-    }
-
-    if (keys.d || keys.ArrowRight) {
-      playerModel.position.x += moveSpeed
-    }
-
-    // Keep player inside the island
-    playerModel.position.x = THREE.MathUtils.clamp(
-      playerModel.position.x,
-      -3.5,
-       3.5
-    )
-
-    playerModel.position.z = THREE.MathUtils.clamp(
-      playerModel.position.z,
-     -3.5,
-      3.5
-    )
+  if (keys.w || keys.ArrowUp) {
+    playerModel.position.z -= moveSpeed
+    playerModel.rotation.y = Math.PI
   }
+
+  if (keys.s || keys.ArrowDown) {
+    playerModel.position.z += moveSpeed
+    playerModel.rotation.y = 0
+  }
+
+  if (keys.a || keys.ArrowLeft) {
+    playerModel.position.x -= moveSpeed
+    playerModel.rotation.y = -Math.PI / 2
+  }
+
+  if (keys.d || keys.ArrowRight) {
+    playerModel.position.x += moveSpeed
+    playerModel.rotation.y = Math.PI / 2
+  }
+
+  // Keep player inside the island
+  playerModel.position.x = THREE.MathUtils.clamp(
+    playerModel.position.x,
+    -3.5,
+    3.5
+  )
+
+  playerModel.position.z = THREE.MathUtils.clamp(
+    playerModel.position.z,
+    -3.5,
+    3.5
+  )
+
+  // Smooth Camera Follow
+  desiredCameraPosition
+    .copy(playerModel.position)
+    .add(cameraOffset)
+
+  camera.position.lerp(desiredCameraPosition, 0.08)
+  camera.lookAt(playerModel.position)
+}
+
+if (playerModel) {
+  for (let i = coinModels.length - 1; i >= 0; i--) {
+    const coin = coinModels[i]
+
+    coin.rotation.y += 0.03
+
+    const distance = playerModel.position.distanceTo(
+      coin.position
+    )
+
+    if (distance < 1.2) {
+      scene.remove(coin)
+      coinModels.splice(i, 1)
+
+      onCoinCollected()
+
+collectedCoinCount++
+
+if (collectedCoinCount >= 3) {
+  chestUnlocked = true
+  console.log('Treasure Chest Unlocked!')
+}
+
+console.log('Coin collected!')
+    }
+  }
+}
+
+// Check Treasure Chest
+if (playerModel && chestModel && chestUnlocked && !gameWon) {
+  const chestDistance = playerModel.position.distanceTo(
+    chestModel.position
+  )
+
+  if (chestDistance < 1.2) {
+    gameWon = true
+    onWin()
+    console.log('You Won!')
+  }
+}
 
   renderer.render(scene, camera)
 }
