@@ -1,16 +1,94 @@
-# React + Vite
+# 🏝️ Treasure Island 3D
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive 3D treasure-hunting game built with React and Three.js. Explore a beautiful island, control your character, collect hidden coins, and find the treasure!
 
-Currently, two official plugins are available:
+## 🎮 Live Demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+[Play Treasure Island 3D](https://treasureisland3d.vercel.app/)
 
-## React Compiler
+## ✨ Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Interactive 3D island environment
+- 3D player character and treasure chest
+- WASD and arrow-key movement controls
+- On-screen movement controls
+- Follow camera system
+- Coin collection and score tracking
+- Winning screen when all 3 coins are collected
+- Responsive game interface
+- Immersive 3D environment and sound effects
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- React
+- JavaScript
+- Three.js
+- Vite
+- CSS
+- GLTF / GLB 3D Models
+
+## 🎯 How to Play
+
+1. Start the game.
+2. Use WASD or arrow keys to move your character.
+3. On mobile, use the on-screen movement buttons.
+4. Explore the island and collect all 3 coins.
+5. Find the hidden treasure and win the game!
+
+## 💻 Run Locally
+
+Clone the repository:
+
+```bash
+git clone https://github.com/moazzam899/treasure-island-3d.git
+```
+
+Navigate to the project:
+
+```bash
+cd treasure-island-3d
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start development server:
+
+```bash
+npm run dev
+```
+
+Create production build:
+
+```bash
+npm run build
+```
+
+## 📁 Project Structure
+
+```text
+treasure-island-3d/
+├── public/
+│   └── models/
+├── src/
+│   ├── components/
+│   │   └── GameCanvas.jsx
+│   ├── utils/
+│   └── App.jsx
+├── index.html
+├── package.json
+└── vite.config.js
+```
+
+## 👨‍💻 Author
+
+**Moazzam Abbasi**
+
+- GitHub: [@moazzam899](https://github.com/moazzam899)
+
+---
+
+Built with ❤️ using React and Three.js.
