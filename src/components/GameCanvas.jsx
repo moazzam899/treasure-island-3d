@@ -10,7 +10,7 @@ import {
   playVictorySound
 } from '../utils/sounds'
 
-function GameCanvas({ onCoinCollected, onWin }) {
+function GameCanvas({ onCoinCollected, onWin, movementRef }) {
   const mountRef = useRef(null)
 
   useEffect(() => {
@@ -21,12 +21,24 @@ function GameCanvas({ onCoinCollected, onWin }) {
     scene.background = new THREE.Color('#87ceeb')
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(
-      60,
-      mount.clientWidth / mount.clientHeight,
-      0.1,
-      1000
-    )
+    // const camera = new THREE.PerspectiveCamera(
+    //   60,
+    //   mount.clientWidth / mount.clientHeight,
+    //   0.1,
+    //   1000
+    // )
+
+    const getCameraFov = () => {
+  return window.innerWidth <= 900 ? 65 : 60
+}
+
+const camera = new THREE.PerspectiveCamera(
+  getCameraFov(),
+  mount.clientWidth / mount.clientHeight,
+  0.1,
+  1000
+)
+
     camera.position.set(0, 5, 10)
     camera.lookAt(0, 0, 0)
 
@@ -80,6 +92,14 @@ const keys = {
   ArrowDown: false,
   ArrowLeft: false,
   ArrowRight: false,
+}
+
+const setMovementKey = (key, pressed) => {
+  keys[key] = pressed
+}
+
+if (movementRef) {
+  movementRef.current = setMovementKey
 }
 
 const handleKeyDown = (event) => {
@@ -196,7 +216,9 @@ loadModel('/models/player-character.glb', { x: 0, y: 0, z: 1 }, 1.5)
 
     const moveSpeed = 0.08
 
-    const cameraOffset = new THREE.Vector3(0, 7, 12)
+    // const cameraOffset = new THREE.Vector3(0, 7, 12)
+
+    const cameraOffset = new THREE.Vector3(0, 6, 9)
 const desiredCameraPosition = new THREE.Vector3()
 
 const animate = () => {
@@ -318,29 +340,64 @@ if (playerModel && chestModel && chestUnlocked && !gameWon) {
 animate()
 
     // Responsive canvas
-    const handleResize = () => {
-      const width = mount.clientWidth
-      const height = mount.clientHeight
+    // const handleResize = () => {
+    //   const width = mount.clientWidth
+    //   const height = mount.clientHeight
 
-      camera.aspect = width / height
-      camera.updateProjectionMatrix()
-      renderer.setSize(width, height)
-    }
+    //   camera.aspect = width / height
+    //   camera.updateProjectionMatrix()
+    //   renderer.setSize(width, height)
+    // }
+
+    const handleResize = () => {
+  const width = mount.clientWidth
+  const height = mount.clientHeight
+
+  camera.aspect = width / height
+  camera.fov = getCameraFov()
+
+  camera.updateProjectionMatrix()
+
+  renderer.setSize(width, height)
+  renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 2)
+  )
+}
 
     window.addEventListener('resize', handleResize)
 
     // Cleanup
-    return () => {
-      cancelAnimationFrame(animationId)
-      window.removeEventListener('resize', handleResize)
-      renderer.dispose()
-      groundGeometry.dispose()
-      groundMaterial.dispose()
+    // return () => {
+    //   cancelAnimationFrame(animationId)
+    //   window.removeEventListener('resize', handleResize)
+    //   renderer.dispose()
+    //   groundGeometry.dispose()
+    //   groundMaterial.dispose()
 
-      if (mount.contains(renderer.domElement)) {
-        mount.removeChild(renderer.domElement)
-      }
-    }
+    //   if (mount.contains(renderer.domElement)) {
+    //     mount.removeChild(renderer.domElement)
+    //   }
+    // }
+
+    return () => {
+  cancelAnimationFrame(animationId)
+
+  window.removeEventListener('resize', handleResize)
+  window.removeEventListener('keydown', handleKeyDown)
+  window.removeEventListener('keyup', handleKeyUp)
+
+  if (movementRef) {
+    movementRef.current = null
+  }
+
+  renderer.dispose()
+  groundGeometry.dispose()
+  groundMaterial.dispose()
+
+  if (mount.contains(renderer.domElement)) {
+    mount.removeChild(renderer.domElement)
+  }
+}
   }, [])
 
   return <div ref={mountRef} className="game-canvas" />
